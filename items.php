@@ -186,7 +186,7 @@ echo '
                     <i id="items_list_loader" style="display:none;float:right;margin-right:5px;" class="fa fa-cog fa-spin mi-red"></i>&nbsp;
                 </div>
             </div>
-            <!--<div id="items_list_loader" style="display:none; float:right;margin:-26px 10px 0 0; z-index:1000;"><img src="includes/images/76.gif" /></div>-->
+            <!--<div id="items_list_loader" style="display:none; float:right;margin:-26px 10px 0 0; z-index:1000;"><img src="includes/images/ajax-loader.gif" /></div>-->
             <div id="items_list"></div>
         </div>';
 // Zone ITEM DETAIL
@@ -229,6 +229,7 @@ echo '
                         <div id="id_label" style="display:inline; margin:4px 0px 0px 120px; "></div>
                         <input type="hidden" id="hid_label" value="', isset($dataItem) ? htmlspecialchars($dataItem['label']) : '', '" />
                         <div style="float:right; font-family:arial; margin-right:5px;" id="item_viewed_x_times"></div>
+						<div style="float:right; font-family:arial; margin-right:5px;" id="item_comments_system_icon"></div>
 						
 						<!-- INFO -->
 						<div class="" style="float:right;margin-right:5px;" id="item_extra_info" title=""></div>
@@ -417,7 +418,8 @@ echo '
 // Line for URL
 echo '
             <label for="" class="label_cpm">'.$LANG['url'].' : </label>
-            <input type="text" name="url" id="url" class="input_text text ui-widget-content ui-corner-all" />
+            <input type="text" name="url" id="url" class="input_text text ui-widget-content ui-corner-all" />';
+echo '
         </div>';
 // Tabs Items N?2
 echo '
@@ -886,7 +888,7 @@ echo '
     <div id="div_item_share_error" style="text-align:center;margin:2px;display:none;" class="ui-state-error ui-corner-all"></div>
     <div style="">'.$LANG['item_share_text'].'</div>
     <input type="text" id="item_share_email" class="ui-corner-all" style="width:100%;" />
-    <div id="div_item_share_status" style="text-align:center;margin-top:15px;display:none;" class="ui-corner-all"><img src="includes/images/76.gif" /></div>
+    <div id="div_item_share_status" style="text-align:center;margin-top:15px;display:none;" class="ui-corner-all"><img src="includes/images/ajax-loader.gif" /></div>
 </div>';
 // DIALOG FOR ITEM IS UPDATED
 echo '
@@ -945,4 +947,13 @@ echo '
     </div>
 </div>';
 
+
+// DIALOG FOR COMMENTS SYSTEM
+if (isset($_SESSION['settings']['comments_system']) && $_SESSION['settings']['comments_system'] == 1) {
+	echo '
+<div id="dialog_comments_system" style="display:none;">
+    <div id="comments_system_list" style="margin:5px;"></div>
+</div>';
+}
+echo "ici ".$_SESSION['my_sk'];
 require_once 'items.load.php';

@@ -698,7 +698,7 @@ if (
         </div>
     </div>';
 
-    // DUO box
+// DUO box
     echo '
     <div id="dialog_duo" style="display:none;padding:4px;">
         <div id="div_duo"></div>

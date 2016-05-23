@@ -76,7 +76,7 @@ switch ($_POST['type']) {
 
             // send query
             $rows = DB::query(
-                "SELECT i.id as id, i.restricted_to as restricted_to, i.perso as perso, i.label as label, i.description as description, i.pw as pw, i.login as login,
+                "SELECT i.id as id, i.restricted_to as restricted_to, i.label as label, i.description as description, i.pw as pw, i.login as login,
                     l.date as date, i.pw_iv as pw_iv,
                     n.renewal_period as renewal_period
                     FROM ".prefix_table("items")." as i
@@ -101,22 +101,13 @@ switch ($_POST['type']) {
                 //exclude all results except the first one returned by query
                 if (empty($id_managed) || $id_managed != $record['id']) {
                     if (
-                        (in_array($id, $_SESSION['personal_visible_groups']) && !($record['perso'] == 1 && $_SESSION['user_id'] == $record['restricted_to']) && !empty($record['restricted_to']))
-                        ||
-                        (!empty($record['restricted_to']) && !in_array($_SESSION['user_id'], $restricted_users_array))
+                        !empty($record['restricted_to']) && !in_array($_SESSION['user_id'], $restricted_users_array)
                     ) {
                         //exclude this case
                     } else {
-                        //encrypt PW
-                        if (!empty($_POST['salt_key']) && isset($_POST['salt_key'])) {
-                            $pw = cryption($record['pw'], mysqli_escape_string($link, stripslashes($_POST['salt_key'])), $record['pw_iv'], "decrypt");
-                        } else {
-                            $pw = cryption($record['pw'], SALT, $record['pw_iv'], "decrypt");
-                        }
-                        /*if ($record['perso'] != 1) {
-                            $pw = stripslashes($pw);
-                            $pw = substr(addslashes($pw), strlen($record['rand_key']));
-                        }*/
+                        //decrypt PW
+                        $decrypt = cryption($record['pw'], "", $record['pw_iv'], "decrypt");
+						
                         // store
                         DB::insert(
                             prefix_table("export"),
@@ -124,8 +115,8 @@ switch ($_POST['type']) {
                                 'id' => $record['id'],
                                 'description' => addslashes($record['description']),
                                 'label' => addslashes($record['label']),
-                                'pw' => stripslashes($pw['string']),
-                                'login' => $record['login'],
+                                'pw' => stripslashes($decrypt['string']),
+                                'login' => $record['login'] == null ? '' : $record['login'],
                                 'path' => $path
                             )
                         );
@@ -269,7 +260,7 @@ switch ($_POST['type']) {
                     //exclude all results except the first one returned by query
                     if (empty($id_managed) || $id_managed != $record['id']) {
                         if (
-                            (in_array($id, $_SESSION['personal_visible_groups']) && !($record['perso'] == 1 && $_SESSION['user_id'] == $record['restricted_to']) && !empty($record['restricted_to']))
+                            (!($_SESSION['user_id'] == $record['restricted_to']) && !empty($record['restricted_to']))
                             ||
                             (!empty($record['restricted_to']) && !in_array($_SESSION['user_id'], $restricted_users_array))
                         ) {
@@ -284,7 +275,7 @@ switch ($_POST['type']) {
                             $full_listing[$i] = array(
                                 'id' => $record['id'],
                                 'label' => $record['label'],
-                                'description' => addslashes(str_replace(array(";", "<br />"), array("|", "\n\r"), mysqli_escape_string($link, stripslashes(utf8_decode($record['description']))))),
+                                'description' => addslashes(str_replace(array(";", "<br />"), array("|", "/"), mysqli_escape_string($link, stripslashes(utf8_decode($record['description']))))),
                                 'pw' => addslashes($pw['string']),
                                 'login' => $record['login'],
                                 'restricted_to' => $record['restricted_to'],

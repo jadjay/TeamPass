@@ -76,11 +76,6 @@ $tree = new Tree\NestedTree\NestedTree(prefix_table("nested_tree"), 'id', 'paren
 $aes = new SplClassLoader('Encryption\Crypt', '../includes/libraries');
 $aes->register();
 
-// phpcrypt
-require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/phpcrypt/phpCrypt.php';
-use PHP_Crypt\PHP_Crypt as PHP_Crypt;
-use PHP_Crypt\Cipher as Cipher;
-
 // prepare Encryption class calls
 use \Defuse\Crypto\Crypto;
 use \Defuse\Crypto\Exception as Ex;
@@ -156,14 +151,14 @@ if (isset($_POST['type'])) {
                 // encrypt PW
                 if ($dataReceived['salt_key_set'] == 1 && isset($dataReceived['salt_key_set']) && $dataReceived['is_pf'] == 1 && isset($dataReceived['is_pf'])) {
                     if (DEFUSE_ENCRYPTION === TRUE) {
-                        $passwd = crypto($pw, $_SESSION['my_sk'], "encrypt");
+                        $passwd = cryption($pw, $_SESSION['my_sk'], "", "encrypt");
                     } else {
                         $passwd = cryption($pw, $_SESSION['my_sk'], "", "encrypt");
                     }
                     $restictedTo = $_SESSION['user_id'];
                 } else {
                     if (DEFUSE_ENCRYPTION === TRUE) {
-                        $passwd = crypto($pw, "", "encrypt");
+                        $passwd = cryption($pw, "", "", "encrypt");
                     } else {
                         $passwd = cryption($pw, SALT, "", "encrypt");
                     }
@@ -389,7 +384,7 @@ if (isset($_POST['type'])) {
                 $pw = $original_pw = $sentPw = htmlspecialchars_decode($dataReceived['pw']);
                 $login = noHTML(htmlspecialchars_decode($dataReceived['login']));
                 $tags = htmlspecialchars_decode($dataReceived['tags']);
-                $email = noHTML(htmlspecialchars_decode($dataReceived['email']));
+				$email = noHTML($dataReceived['email']);
                 // Get all informations for this item
                 $dataItem = DB::queryfirstrow(
                     "SELECT *
@@ -699,15 +694,9 @@ if (isset($_POST['type'])) {
                         $reloadPage = true;
                     }
                     /*PASSWORD */
-                    if (isset($_SESSION['my_sk']) || !empty($_SESSION['my_sk'])){
-                        $oldPw = $data['pw'];
-                        $oldPwIV = $data['pw_iv'];
-                        $oldPwClear = cryption($oldPw, $_SESSION['my_sk'], "", "decrypt");
-                    } else {
-                        $oldPw = $data['pw'];
-                        $oldPwIV = $data['pw_iv'];
-                        $oldPwClear = cryption($oldPw, SALT, $oldPwIV, "decrypt");
-                    }
+                    $oldPw = $data['pw'];
+					$oldPwIV = $data['pw_iv'];
+					$oldPwClear = cryption($oldPw, "", $oldPwIV, "decrypt");
                     if ($sentPw != $oldPwClear['string']) {
                         logItems($dataReceived['id'], $label, $_SESSION['user_id'], 'at_modification', $_SESSION['login'], 'at_pw :'.$oldPw, $oldPwIV);
                     }
@@ -745,16 +734,12 @@ if (isset($_POST['type'])) {
                             (!empty($record['raison']) ? (count($reason) > 1 ? $LANG[trim($reason[0])].' => '.$reason[1] : ($record['action'] != "at_manual" ? $LANG[trim($reason[0])] : trim($reason[0]))):'');
                         }
                     }
-                    // decrypt PW
-                    if (empty($dataReceived['salt_key'])) {
-                        $encrypt = cryption($dataItem['pw'], SALT, "", "encrypt");
-                    } else {
-                        $encrypt = cryption($dataItem['pw'], $_SESSION['my_sk'], "", "encrypt");
-                    }
-
+                    // encrypt PW
+                    $encrypt = cryption($dataItem['pw'], "", "", "encrypt");
                     $pw = cleanString($encrypt['string']);
+					
                     // generate 2d key
-                    $_SESSION['key_tmp'] = bin2hex(PHP_Crypt::createKey(PHP_Crypt::RAND, 16));
+					$_SESSION['key_tmp'] = GenerateCryptKey(16);
 
                     // Prepare files listing
                     $files = $filesEdit = "";
@@ -1175,6 +1160,14 @@ if (isset($_POST['type'])) {
                 } else {
                     $arrData['anyone_can_modify'] = $dataItem['anyone_can_modify'];
                 }
+				
+				// Comments System mng
+				if (isset($_SESSION['settings']['comments_system'])
+                    && $_SESSION['settings']['comments_system'] == 1) {
+                    $arrData['comments_are_on'] = 1;
+                } else {
+                    $arrData['comments_are_on'] = 0;
+                }
 
                 // statistics
                 DB::update(
@@ -1383,7 +1376,7 @@ if (isset($_POST['type'])) {
             }
 
             // generate 2d key
-            $_SESSION['key_tmp'] = bin2hex(PHP_Crypt::createKey(PHP_Crypt::RAND, 16));
+            $_SESSION['key_tmp'] = GenerateCryptKey(16);
 
             // Prepare files listing
             $files = $filesEdit = "";
@@ -2672,7 +2665,7 @@ if (isset($_POST['type'])) {
             }
 
             // generate session
-            $otv_code = bin2hex(PHP_Crypt::createKey(PHP_Crypt::RAND, 16));
+            $otv_code = GenerateCryptKey(16);
 
             DB::insert(
                 prefix_table("otv"),

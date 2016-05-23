@@ -278,7 +278,7 @@ function rest_get () {
                     $id = $data['id'];
                     $json[$id]['label'] = mb_convert_encoding($data['label'], mb_detect_encoding($data['label']), 'UTF-8');
                     $json[$id]['login'] = mb_convert_encoding($data['login'], mb_detect_encoding($data['login']), 'UTF-8');
-                    $crypt_pw = cryption($data['pw'], SALT, $data['pw_iv'], "decrypt" );
+                    $crypt_pw = cryption($data['pw'], "", $data['pw_iv'], "decrypt" );
                     $json[$id]['pw'] = $crypt_pw['string'];
                 }
 
@@ -298,7 +298,7 @@ function rest_get () {
                         $id = $data['id'];
                         $json[$id]['label'] = mb_convert_encoding($data['label'], mb_detect_encoding($data['label']), 'UTF-8');
                         $json[$id]['login'] = mb_convert_encoding($data['login'], mb_detect_encoding($data['login']), 'UTF-8');
-                        $crypt_pw = cryption($data['pw'], SALT, $data['pw_iv'], "decrypt" );
+                        $crypt_pw = cryption($data['pw'], "", $data['pw_iv'], "decrypt" );
                         $json[$id]['pw'] = $crypt_pw['string'];
                     }
                 }
@@ -325,7 +325,7 @@ function rest_get () {
                     $id = $data['id'];
                     $json[$id]['label'] = mb_convert_encoding($data['label'], mb_detect_encoding($data['label']), 'UTF-8');
                     $json[$id]['login'] = mb_convert_encoding($data['login'], mb_detect_encoding($data['login']), 'UTF-8');
-                    $crypt_pw = cryption($data['pw'], SALT, $data['pw_iv'], "decrypt" );
+                    $crypt_pw = cryption($data['pw'], "", $data['pw_iv'], "decrypt" );
                     $json[$id]['pw'] = $crypt_pw['string'];
                 }
             }
@@ -382,7 +382,7 @@ function rest_get () {
                     $json['id'] = mb_convert_encoding($data['id'], mb_detect_encoding($data['id']), 'UTF-8');
                     $json['label'] = mb_convert_encoding($data['label'], mb_detect_encoding($data['label']), 'UTF-8');
                     $json['login'] = mb_convert_encoding($data['login'], mb_detect_encoding($data['login']), 'UTF-8');
-                    $crypt_pw = cryption($data['pw'], SALT, $data['pw_iv'], "decrypt" );
+                    $crypt_pw = cryption($data['pw'], "", $data['pw_iv'], "decrypt" );
                     $json['pw'] = $crypt_pw['string'];
                     $json['folder_id'] = $data['id_tree'];
                     $json['status'] = utf8_encode("OK");
@@ -444,7 +444,7 @@ function rest_get () {
                         $itemExists = 0;
                     }
                     if ($itemExists == 0) {
-                        $encrypt = cryption($item_pwd, SALT, "", "encrypt");
+                        $encrypt = cryption($item_pwd, "", "", "encrypt");
                         if (empty($encrypt['string'])) {
                             rest_error ('PASSWORDEMPTY');
                         }
@@ -716,7 +716,7 @@ function rest_get () {
                                     // prepare export
                                     $json[$data['id']]['label'] = mb_convert_encoding($data['label'], mb_detect_encoding($data['label']), 'UTF-8');
                                     $json[$data['id']]['login'] = mb_convert_encoding($data['login'], mb_detect_encoding($data['login']), 'UTF-8');
-                                    $crypt_pw = cryption($data['pw'], SALT, $data['pw_iv'], "decrypt");
+                                    $crypt_pw = cryption($data['pw'], "", $data['pw_iv'], "decrypt");
                                     $json[$data['id']]['pw'] = $crypt_pw['string'];
                                 }
                             }
@@ -810,7 +810,7 @@ function rest_get () {
                             }
 
                             // encrypt password
-                            $encrypt = cryption($GLOBALS['request'][2], SALT, "", "encrypt");
+                            $encrypt = cryption($GLOBALS['request'][2], "", "", "encrypt");
 
                             // add new item
                             DB::insert(

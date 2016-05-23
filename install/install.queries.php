@@ -249,6 +249,7 @@ if (isset($_POST['type'])) {
                             `complexity_level` varchar(3) NOT null DEFAULT '-1',
                             `auto_update_pwd_frequency` tinyint(2) NOT null DEFAULT '0',
                             `auto_update_pwd_next_date` int(15) DEFAULT NULL,
+							`encryption_protocol` varchar(20) NOT null DEFAULT 'none',
                             PRIMARY KEY (`id`),
                             KEY    `restricted_inactif_idx` (`restricted_to`,`inactif`)
                             ) CHARSET=utf8;"

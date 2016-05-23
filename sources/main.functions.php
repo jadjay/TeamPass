@@ -19,16 +19,6 @@ if (!isset($_SESSION['CPM']) || $_SESSION['CPM'] != 1) {
     die('Hacking attempt...');
 }
 
-// load phpCrypt
-if (!isset($_SESSION['settings']['cpassman_dir']) || empty($_SESSION['settings']['cpassman_dir'])) {
-    require_once '../includes/libraries/phpcrypt/phpCrypt.php';
-} else {
-    require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/phpcrypt/phpCrypt.php';
-}
-use PHP_Crypt\PHP_Crypt as PHP_Crypt;
-use PHP_Crypt\Cipher as Cipher;
-
-
 // prepare Encryption class calls
 use \Defuse\Crypto\Crypto;
 use \Defuse\Crypto\Exception as Ex;
@@ -251,132 +241,53 @@ function bCrypt($password, $cost)
     return crypt($password, $salt);
 }
 
-function cryption($p1, $p2, $p3, $p4 = null)
-{
-    if (DEFUSE_ENCRYPTION === TRUE) {
-        // load PhpEncryption library
-        if (!isset($_SESSION['settings']['cpassman_dir']) || empty($_SESSION['settings']['cpassman_dir'])) {
-            require_once '../includes/libraries/Encryption/Encryption/Crypto.php';
-            //require_once '../includes/libraries/Encryption/Encryption/ExceptionHandler.php';
-        } else {
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/Crypto.php';
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/Core.php';
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/Encoding.php';
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/Key.php';
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/KeyConfig.php';
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/RuntimeTests.php';
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/Config.php';
-            require_once $_SESSION['settings']['cpassman_dir'] . '/includes/libraries/Encryption/Encryption/ExceptionHandler.php';
-        }
-        return defuse_crypto($p1, $p3, $p4);
-    } else {
-        return cryption_phpCrypt($p1, $p2, $p3, $p4);
-    }
-}
-
 /*
- * cryption() - Encrypt and decrypt string based upon phpCrypt library
- *
- * Using AES_128 and mode CBC
- *
- * $key and $iv have to be given in hex format
- */
-function cryption_phpCrypt($string, $key, $iv, $type)
+* 
+*/
+function cryption($message, $salt, $key, $type)
 {
-    // manage key origin
-    if (empty($key)) $key = SALT;
-
-    if ($key != SALT) {
-        // check key (AES-128 requires a 16 bytes length key)
-        if (strlen($key) < 16) {
-            for ($x = strlen($key) + 1; $x <= 16; $x++) {
-                $key .= chr(0);
-            }
-        } else if (strlen($key) > 16) {
-            $key = substr($key, 16);
-        }
-    }
-
-    // load crypt
-    $crypt = new PHP_Crypt($key, PHP_Crypt::CIPHER_AES_128, PHP_Crypt::MODE_CBC);
-
-    if ($type == "encrypt") {
-        // generate IV and encrypt
-        $iv = $crypt->createIV();
-        $encrypt = $crypt->encrypt($string);
-        // return
-        return array(
-            "string" => bin2hex($encrypt),
-            "iv" => bin2hex($iv),
-            "error" => empty($encrypt) ? "ERR_ENCRYPTION_NOT_CORRECT" : ""
-        );
-    } else if ($type == "decrypt") {
-        // case if IV is empty
-        if (empty($iv))
-            return array(
-                'string' => "",
-                'error' => "ERR_ENCRYPTION_NOT_CORRECT"
-            );
-
-        // convert
-        try {
-            $string = testHex2Bin(trim($string));
-            $iv = testHex2Bin($iv);
-        }
-        catch (Exception $e) {
-            // error - $e->getMessage();
-            return array(
-                'string' => "",
-                'error' => "ERR_ENCRYPTION_NOT_CORRECT"
-            );
-        }
-
-        // load IV
-        $crypt->IV($iv);
-        // decrypt
-        $decrypt = $crypt->decrypt($string);
-        // return
-        //return str_replace(chr(0), "", $decrypt);
-        return array(
-            'string' => str_replace(chr(0), "", $decrypt),
-            'error' => ""
-        );
-    }
-}
-
-function testHex2Bin ($val)
-{
-    if (!@hex2bin($val)) {
-        throw new Exception("ERROR");
-    }
-    return hex2bin($val);
-}
-
-function defuse_crypto($message, $key, $type)
-{
-    //echo $message." ;; ".$key." ;; ".$type;
     // init
     $err = '';
+	
+	// ensure something is to be encrypted / decrypted
+	if (empty($message)) {
+		return array(
+            'string' => "",
+            'error' => $err
+        );
+	}
+	
+	// load library
+	if (!isset($_SESSION['settings']['cpassman_dir']) || empty($_SESSION['settings']['cpassman_dir'])) {
+		$_SESSION['settings']['cpassman_dir'] = "..";
+	}
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Crypto.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Core.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Encoding.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Key.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/RuntimeTests.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/KeyOrPassword.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/DerivedKeys.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/random/random.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/ExceptionHandler.php';
 
     // manage key origin
     if (empty($key) && $type == "encrypt") {
         try {
-            $key = \Defuse\Crypto\Crypto::createNewRandomKey();
-        } catch (\Defuse\Crypto\Exception\CryptoTestFailedException $ex) {
+            $key = \Defuse\Crypto\Key::createNewRandomKey();
+        } catch (\Defuse\Crypto\Exception\EnvironmentIsBrokenException $ex) {
             $err = ('Cannot safely create a key');
         } catch (\Defuse\Crypto\Exception\CannotPerformOperationException $ex) {
             $err = ('Cannot safely create a key');
         }
-
-        //\Defuse\Crypto\Encoding::binToHex($key);
-        $tmp = \Defuse\Crypto\Key::saveToAsciiSafeString($key);
-        //echo $key_plain;
+		// get plaintext key
+        $key_plain = $key->saveToAsciiSafeString();
     }
 
     if ($type == "encrypt") {
         try {
             $ciphertext = \Defuse\Crypto\Crypto::Encrypt($message, $key);
-        } catch (\Defuse\Crypto\Exception\CryptoTestFailedException $ex) {
+        } catch (\Defuse\Crypto\Exception\EnvironmentIsBrokenException $ex) {
             $err = ('Cannot safely perform encryption');
         } catch (\Defuse\Crypto\Exception\CannotPerformOperationException $ex) {
             $err = ('Cannot safely perform encryption');
@@ -384,20 +295,39 @@ function defuse_crypto($message, $key, $type)
 
         return array(
             'string' => isset($ciphertext) ? $ciphertext : "",
-            //'iv' => $key_plain,
+            'iv' => $key_plain,
             'error' => $err
         );
 
     } else if ($type == "decrypt") {
-        try {
-            $decrypted = \Defuse\Crypto\Crypto::Decrypt($message, $key);
-        } catch (\Defuse\Crypto\Exception\InvalidCiphertextException $ex) {
-            $err = ('DANGER! DANGER! The ciphertext has been tampered with!');
-        } catch (\Defuse\Crypto\Exception\CryptoTestFailedException $ex) {
-            $err = ('Cannot safely perform decryption');
-        } catch (\Defuse\Crypto\Exception\CannotPerformOperationException $ex) {
-            $err = ('Cannot safely perform decryption');
-        }
+		// check Key structure
+		if (strstr($key, "def00000") !== false) {
+			// load key
+			try {
+				$key = \Defuse\Crypto\Key::loadFromAsciiSafeString($key);
+			} catch (\Defuse\Crypto\Exception\EnvironmentIsBrokenException $ex) {
+				$err = ('DANGER! DANGER! The ciphertext has been tampered with!');
+			} catch (\Defuse\Crypto\Exception\BadFormatException $ex) {
+				$err = ('Cannot safely perform decryption');
+			} catch (\Defuse\Crypto\Exception\CannotPerformOperationException $ex) {
+				$err = ('Cannot safely perform decryption');
+			}
+			
+			
+			// now decrypt
+			try {
+				$decrypted = \Defuse\Crypto\Crypto::Decrypt($message, $key);
+			} catch (\Defuse\Crypto\Exception\EnvironmentIsBrokenException $ex) {
+				$err = ('DANGER! DANGER! The ciphertext has been tampered with!');
+			} catch (\Defuse\Crypto\Exception\BadFormatException $ex) {
+				$err = ('Cannot safely perform decryption');
+			} catch (\Defuse\Crypto\Exception\CannotPerformOperationException $ex) {
+				$err = ('Cannot safely perform decryption');
+			}
+		} else {
+			$err = "Provided KEY is not correct!";
+		}
+		
         return array(
             'string' => isset($decrypted) ? $decrypted : "",
             'error' => $err
@@ -1329,5 +1259,5 @@ function get_client_ip_server() {
  */
 function noHTML($input, $encoding = 'UTF-8')
 {
-    return htmlspecialchars($input, ENT_QUOTES | ENT_HTML5, $encoding);
+    return htmlentities($input, ENT_QUOTES | ENT_HTML5, $encoding);
 }

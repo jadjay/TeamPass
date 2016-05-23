@@ -799,7 +799,7 @@ function EditerItem()
             } else {
                 var description = sanitizeString($("#edit_desc").val()).replace(/\n/g, '<br />').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
             }
-
+			
             // Sanitize description with Safari
             description = clean_up_html_safari(description);
 
@@ -1185,9 +1185,18 @@ function AfficherDetailsItem(id, salt_key_required, expired_item, restricted, di
                     $("#pw_shown").val("0");
 
                     // show some info on top
-                    if (data.auto_update_pwd_frequency != "0") var auto_update_pwd = "<i class='fa fa-shield tip' title='<?php echo $LANG['server_auto_update_password_enabled_tip'];?>'></i>&nbsp;<b>"+data.auto_update_pwd_frequency+"</b>&nbsp;|&nbsp;";
-                    else var auto_update_pwd = "";
-                    $("#item_viewed_x_times").html(auto_update_pwd+"&nbsp;<i class='fa fa-sticky-note-o tip' title='Number of times item was displayed'></i>&nbsp;<b>"+data.viewed_no+"</b>");
+                    if (data.auto_update_pwd_frequency != "0") {
+						var auto_update_pwd = "<i class='fa fa-shield tip' title='<?php echo $LANG['server_auto_update_password_enabled_tip'];?>'></i>&nbsp;<b>"+data.auto_update_pwd_frequency+"</b>&nbsp;|&nbsp;";
+                    } else {
+						var auto_update_pwd = "";
+					}
+                    $("#item_viewed_x_times").html(auto_update_pwd+"&nbsp;<i class='fa fa-info tip' title='Number of times item was displayed'></i>&nbsp;<b>"+data.viewed_no+"</b>");
+					
+					// show comments system icon
+					if (data.comments_are_on == "1") {
+						$("#item_comments_system_icon").html("<i class='fa fa-comment fa-fw' style='cursor:pointer;' onclick='loadCommentsDialog()'></i>&nbsp;|&nbsp;");
+					}
+					
 
                     // Show timestamp
                     $("#timestamp_item_displayed").val(data.timestamp);
@@ -1250,6 +1259,7 @@ function AfficherDetailsItem(id, salt_key_required, expired_item, restricted, di
                         $("#hid_restricted_to").val(data.id_restricted_to);
                         $("#hid_restricted_to_roles").val(data.id_restricted_to_roles);
                         $("#id_tags").html(data.tags);
+						
                         // extract real tags list
                         var item_tag = "";
                         $("span.item_tag").each(function(){
@@ -3285,6 +3295,8 @@ if ($_SESSION['settings']['upload_imageresize_options'] == 1) {
                     function(data) {
                         if (data[0].error != "") {
                             $("#dialog_upgrade_personal_passwords_status").html(data[0].error).addClass("ui-state-error").show();
+                        } else if (data[0].nb == 0) {
+                            $("#dialog_upgrade_personal_passwords_status").html("Nothing to perform.").addClass("ui-state-error").show();
                         } else {
                             reEncryptPersonalPwds(data[0].pws_list, data[0].currentId, data[0].nb);
                         }
@@ -3295,7 +3307,16 @@ if ($_SESSION['settings']['upload_imageresize_options'] == 1) {
             "<?php echo $LANG['cancel_button'];?>": function() {
                 $(this).dialog("close");
             }
-        }
+        },
+		open: function (event, ui) {
+			if ($("#personal_sk_set").val() == 0) {
+				// disable button
+                $("#dialog_upgrade_personal_passwords ~ .ui-dialog-buttonpane").find("button:contains('<?php echo $LANG['admin_action_db_backup_start_tip'];?>')").hide();
+			} else {
+				// enable button
+                $("#dialog_upgrade_personal_passwords ~ .ui-dialog-buttonpane").find("button:contains('<?php echo $LANG['admin_action_db_backup_start_tip'];?>')").show();
+			}
+		}
     });
 
     //DIALOG FOR SSH
@@ -3313,6 +3334,24 @@ if ($_SESSION['settings']['upload_imageresize_options'] == 1) {
         },
         close: function() {
             $("#div_ssh").html("<i class=\'fa fa-cog fa-spin fa-2x\'></i>&nbsp;<b><?php echo $LANG['please_wait'];?></b>");
+        }
+    });
+
+    //DIALOG FOR COMMENTS SYSTEM
+    $("#dialog_comments_system").dialog({
+        bgiframe: true,
+        modal: true,
+        autoOpen: false,
+        width: 900,
+        height: 600,
+        title: "<?php echo $LANG['comments_dialog_title'];?>",
+        buttons: {
+            "<?php echo $LANG['close'];?>": function() {
+                $("#dialog_comments_system").dialog("close");
+            }
+        },
+        close: function() {
+            $("#dialog_comments_system").dialog("close");
         }
     });
 
@@ -3827,13 +3866,13 @@ function reEncryptPersonalPwds(remainingIds, currentId, nb)
             } else {
                 $("#dialog_upgrade_personal_passwords_status").html('<i class="fa fa-info"></i>&nbsp;<?php echo $LANG['operation_encryption_done'];?>');
                 // disable button
-                $("#dialog_upgrade_personal_passwords ~ .ui-dialog-buttonpane").find("button:contains('<?php echo $LANG['admin_action_db_backup_start_tip'];?>')").prop("disabled", false);
+                $("#dialog_upgrade_personal_passwords ~ .ui-dialog-buttonpane").find("button:contains('<?php echo $LANG['admin_action_db_backup_start_tip'];?>')").hide();
             }
         }
     });
 }
 
- function serverAutoChangePwd()
+function serverAutoChangePwd()
  {
      console.log("opening");
     $("#dialog_ssh").dialog({
@@ -3843,6 +3882,18 @@ function reEncryptPersonalPwds(remainingIds, currentId, nb)
             );
         }
     }).dialog("open");
+}
+// loading Comments System for Item
+function loadCommentsDialog()
+{
+	$("#dialog_comments_system").dialog({
+		open: function(event, ui) {
+			$("#comments_system_list").html("");
+			$("#comments_system_list").load(
+				"<?php echo $_SESSION['settings']['cpassman_url'].'/items.comments.php?key='.$_SESSION['key'];?>&id="+$("#selected_items").val(), function(){}
+			);
+		}
+	}).dialog("open");
 }
 
 $.fn.simulateClick = function() {

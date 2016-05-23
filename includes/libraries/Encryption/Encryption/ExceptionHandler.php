@@ -27,9 +27,11 @@ class ExceptionHandler
     public function handler($ex)
     {
         if (
-            $ex instanceof Ex\InvalidCiphertextException ||
-            $ex instanceof Ex\CannotPerformOperationException ||
-            $ex instanceof Ex\CryptoTestFailedException
+            $ex instanceof Ex\BadFormatException ||
+            $ex instanceof Ex\CryptoException ||
+            $ex instanceof Ex\EnvironmentIsBrokenException ||
+            $ex instanceof Ex\IOException ||
+            $ex instanceof Ex\WrongKeyOrModifiedCiphertextException
         ) {
             echo "FATAL ERROR: Uncaught crypto exception. Suppressing output.\n";
         } else {

@@ -251,7 +251,7 @@ $htmlHeaders .= '
                     $("#connection_error").html("'.$LANG['reload_page_after_user_account_creation'].'").show().switchClass("ui-state-error", "ui-state-default");
                     setTimeout(
                         function (){
-                            window.location.href="index.php"
+                            window.location.href="logout.php"
                         },
                         3000
                     );
@@ -711,7 +711,7 @@ $htmlHeaders .= '
             title: "'.$LANG['home_personal_saltkey_label'].'",
             open: function( event, ui ) {
                 $("#input_personal_saltkey").val("'.addslashes(str_replace("&quot;", '"', $_SESSION['my_sk'])).'");
-				console.log("'.addslashes(str_replace("&quot;", '"', $_SESSION['my_sk'])).'");
+				console.log("SK: '.addslashes(str_replace("&quot;", '"', $_SESSION['my_sk'])).'");
             },
             buttons: {
                 "'.$LANG['save_button'].'": function() {

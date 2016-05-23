@@ -11,7 +11,7 @@
 // DONT'T CHANGE BELOW THIS LINE
 global $settings, $languagesList;
 
-$k['version'] = "2.1.26";
+$k['version'] = "2.1.27";
 $k['tool_name'] = "TeamPass";
 $k['one_month_seconds'] = 2592000;
 $k['image_file_ext'] = array('jpg', 'gif', 'png', 'jpeg', 'tiff', 'bmp');
@@ -26,7 +26,7 @@ $k['allowedTags'] = "<b><i><sup><sub><em><strong><u><br><br /><a><strike><ul><bl
 @define('ERR_SESS_EXPIRED', "1002");
 @define('ERR_NO_MCRYPT', "1003");
 @define('ERR_VALID_SESSION', "1004");
-@define('DEFUSE_ENCRYPTION', false);
+@define('ENCRYPTION_PROTOCOL', "PHPEncryption");
 
 // Management Pages
 $mngPages = array(

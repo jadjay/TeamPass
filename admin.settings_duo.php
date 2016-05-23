@@ -95,10 +95,7 @@ echo '
 				</label>
 	        </td>
 	        <td>
-	            <div class="div_radio">
-	                <input type="radio" id="2factors_authentication_radio1" name="2factors_authentication" onclick="changeSettingStatus($(this).attr(\'name\'), 1) " value="1"', (isset($_SESSION['settings']['2factors_authentication']) && $_SESSION['settings']['2factors_authentication'] == 1) ? ' checked="checked"' : '', ' /><label for="2factors_authentication_radio1">'.$LANG['yes'].'</label>
-	                <input type="radio" id="2factors_authentication_radio2" name="2factors_authentication" onclick="changeSettingStatus($(this).attr(\'name\'), 0) " value="0"', isset($_SESSION['settings']['2factors_authentication']) && $_SESSION['settings']['2factors_authentication'] != 1 ? ' checked="checked"' : (!isset($_SESSION['settings']['2factors_authentication']) ? ' checked="checked"':''), ' /><label for="2factors_authentication_radio2">'.$LANG['no'].'</label>
-	            </div>
+				<div class="toggle toggle-modern" id="2factors_authentication" data-toggle-on="', isset($_SESSION['settings']['2factors_authentication']) && $_SESSION['settings']['2factors_authentication'] == 1 ? 'true' : 'false', '"></div><input type="hidden" id="2factors_authentication_input" name="2factors_authentication_input" value="', isset($_SESSION['settings']['2factors_authentication']) && $_SESSION['settings']['2factors_authentication'] == 1 ? '1' : '0', '" />
 			<td>
 		</tr>
 	<!-- // Google Authenticator website name -->
@@ -119,18 +116,17 @@ echo '
 		</div>
 	</div>
 	<hr style="margin:10px 0 10px 0;">
-	<div style="margin-bottom:3px;">
-		<i class="fa fa-sm fa-wrench"></i>&nbsp;
-        <label for="api" style="width:350px;">' .
-        $LANG['settings_duo'].'
-            &nbsp;<i class="fa fa-question-circle tip" title="'.$LANG['settings_duo_tip'].'"></i>
-        </label>
-        <span class="div_radio">
-            <input type="radio" id="api_radio1" name="ldap_mode" onclick="saveDuoStatus(1)" value="1"', isset($_SESSION['settings']['duo']) && $_SESSION['settings']['duo'] == 1 ? ' checked="checked"' : '', ' /><label for="api_radio1">'.$LANG['yes'].'</label>
-            <input type="radio" id="api_radio2" name="ldap_mode" onclick="saveDuoStatus(0)" value="0"', isset($_SESSION['settings']['duo']) && $_SESSION['settings']['duo'] != 1 ? ' checked="checked"' : (!isset($_SESSION['settings']['duo']) ? ' checked="checked"':''), ' /><label for="api_radio2">'.$LANG['no'].'</label>
-        </span>
-        &nbsp;<span id="save_status_wait" style="display: none;"><i class="fa fa-cog fa-spin"></i></span>
-    </div>
+	<div style="width:100%;">
+		<div style="margin-bottom:3px; float:left; width:350px;">
+			<i class="fa fa-sm fa-wrench"></i>&nbsp;
+			<label for="api">' .
+			$LANG['settings_duo'].'
+				&nbsp;<i class="fa fa-question-circle tip" title="'.$LANG['settings_duo_tip'].'"></i>
+			</label>
+		</div>
+		<div class="toggle toggle-modern" id="duo" data-toggle-on="', isset($_SESSION['settings']['duo']) && $_SESSION['settings']['duo'] == 1 ? 'true' : 'false', '" style=" float:left; margin-left: 15px; width:70px;"></div><input type="hidden" id="duo_input" name="duo_input" value="', isset($_SESSION['settings']['duo']) && $_SESSION['settings']['duo'] == 1 ? '1' : '0', '" />
+	</div>
+	<br />
     <div id="duo_enabled" style="', isset($_SESSION['settings']['duo']) && $_SESSION['settings']['duo'] == 1 ? '' : 'display:none;', '">
     <div style="margin-bottom:3px;">
     	<h3>'.$LANG['admin_duo_intro'].'</h3>
@@ -309,6 +305,59 @@ function SaveFA()
 		"json"
 	);
 }
+
+$(function() {
+    $(".toggle").toggles({
+        drag: true, // allow dragging the toggle between positions
+        click: true, // allow clicking on the toggle
+        text: {
+            on: "'.$LANG['yes'].'", // text for the ON position
+            off: "'.$LANG['no'].'" // and off
+        },
+        on: true, // is the toggle ON on init
+        animate: 250, // animation time (ms)
+        easing: "swing", // animation transition easing function
+        width: 50, // width used if not set in css
+        height: 20, // height if not set in css
+        type: "compact" // if this is set to "select" then the select style toggle will be used
+    });
+    $(".toggle").on("toggle", function(e, active) {
+        if (active) {
+            $("#"+e.target.id+"_input").val(1);
+			if(e.target.id == "duo") $("#duo_enabled").show();
+        } else {
+            $("#"+e.target.id+"_input").val(0);
+			if(e.target.id == "duo") $("#duo_enabled").hide();
+        }
+		// store in DB
+		var data = "{\"field\":\""+e.target.id+"\", \"value\":\""+$("#"+e.target.id+"_input").val()+"\"}";
+		$.post(
+			"sources/admin.queries.php",
+			{
+				type    : "save_option_change",
+				data     : prepareExchangedData(data, "encode", "'.$_SESSION['key'].'"),
+				key     : "'.$_SESSION['key'].'"
+			},
+			function(data) {
+				//decrypt data
+				try {
+					data = prepareExchangedData(data , "decode", "'.$_SESSION['key'].'");
+				} catch (e) {
+					// error
+					$("#message_box").html("An error appears. Answer from Server cannot be parsed!<br />Returned data:<br />"+data).show().fadeOut(4000);
+
+					return;
+				}
+				console.log(data);
+				if (data.error == "") {
+					$("#"+e.target.id).after("<span class=\"fa fa-check fa-lg mi-green new_check\" style=\"float:left;\"></span>");
+					$(".new_check").fadeOut(2000);
+					setTimeout("$(\".new_check\").remove()", 2100);
+				}
+			}
+		);
+    });
+});
 
 </script>
 ';

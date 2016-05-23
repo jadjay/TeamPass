@@ -234,7 +234,7 @@ if (
             if ($("#change_pw_encryption_start").val() != "") {
                 start = $("#change_pw_encryption_start").val();
             } else {
-                $("#change_pw_encryption_progress").html("Progress: 0% <img src=\"../includes/images/76.gif\" />");
+                $("#change_pw_encryption_progress").html("Progress: 0% <img src=\"../includes/images/ajax-loader.gif\" />");
             }
             request = $.post("upgrade_ajax.php",
                 {
@@ -248,7 +248,7 @@ if (
                     if (data[0].finish != 1 && data[0].finish != "suggestion") {
                         // handle re-encryption of passwords in Items table
                         $("#change_pw_encryption_start").val(data[0].next);
-                        $("#change_pw_encryption_progress").html("Progress: "+data[0].progress+"% <img src=\"../includes/images/76.gif\" />");
+                        $("#change_pw_encryption_progress").html("Progress: "+data[0].progress+"% <img src=\"../includes/images/ajax-loader.gif\" />");
                         if (parseInt(start) < parseInt($("#change_pw_encryption_total").val())) {
                             newEncryptPw("0");
                         }
@@ -298,7 +298,7 @@ if (isset($_POST['root_url'])) {
 // LOADER
 echo '
     <div style="position:absolute;top:49%;left:49%;display:none;z-index:9999999;" id="loader">
-        <img src="../includes/images/76.gif" />
+        <img src="../includes/images/ajax-loader.gif" />
     </div>';
 
 // HEADER
@@ -462,16 +462,6 @@ if (!isset($_GET['step']) && !isset($_POST['step'])) {
 
                      The upgrader will now update the database by running several upgrade scripts.
                      <div id="step4_progress" style="margin-top:20px;"></div>
-                     <div style="display:none;" id="change_pw_encryption">
-                         <br />
-                         <p><b>Encryption protocol of existing passwords now has to be started. It may take several minutes.</b></p>
-                         <p>
-                             <div style="display:none;" id="change_pw_encryption_progress"></div>
-                         </p>
-                         <input type="button" value="Click to continue" id="but_encrypt_continu" onclick="newEncryptPw(0);" />
-                         <input type="hidden" id="change_pw_encryption_start" value="" />
-                         <input type="hidden" id="change_pw_encryption_total" value="" />
-                     </div>
 
 
                      <div style="margin-top:20px;font-weight:bold;text-align:center;height:27px;" id="res_step4"></div>

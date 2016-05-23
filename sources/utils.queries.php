@@ -124,26 +124,52 @@ switch ($_POST['type']) {
             echo '[{"error" : "something_wrong"}]';
             break;
         }
+		
+		if (!isset($_POST['user_id']) || empty($_POST['user_id'])) {
+            echo '[{"error" : "no_user_id_provided"}]';
+            break;
+        }
+		
+		if (!isset($_SESSION['my_sk']) || empty($_SESSION['my_sk'])) {
+            echo '[{"error" : "no_user_saltkey_provided"}]';
+            break;
+        }
+		
+		//Load Tree
+		require_once $_SESSION['settings']['cpassman_dir'].'/sources/SplClassLoader.php';
+		$tree = new SplClassLoader('Tree\NestedTree', '../includes/libraries');
+		$tree->register();
+		$tree = new Tree\NestedTree\NestedTree(prefix_table("nested_tree"), 'id', 'parent_id', 'title');
 
         $currentID = "";
         $pws_list = array();
-        $rows = DB::query(
-            "SELECT i.id AS id
-            FROM  ".prefix_table("nested_tree")." AS n
-            LEFT JOIN ".prefix_table("items")." AS i ON i.id_tree = n.id
-            WHERE i.perso = %i AND n.title = %i",
-            "1",
-            $_POST['user_id']
-        );
-        foreach ($rows as $record) {
-            if (empty($currentID)) {
-                $currentID = $record['id'];
-            } else {
-                array_push($pws_list, $record['id']);
-            }
-        }
-
-        //
+		
+		// get user personal folder id
+		$user_root_id = DB::queryfirstrow(
+			"SELECT id
+			FROM  ".prefix_table("nested_tree")."
+			WHERE title = %i",
+			$_POST['user_id']
+		);
+		
+		$folders = $tree->getDescendants($user_root_id['id'], true);
+		foreach ($folders as $folder) {
+			$rows = DB::query(
+				"SELECT id
+				FROM  ".prefix_table("items")."
+				WHERE perso = %i AND id_tree = %i",
+				"1",
+				$folder->id
+			);
+			foreach ($rows as $record) {
+				if (empty($currentID)) {
+					$currentID = $record['id'];
+				} else {
+					array_push($pws_list, $record['id']);
+				}
+			}
+		}
+        
         DB::update(
             prefix_table('users'),
             array(
@@ -243,9 +269,15 @@ switch ($_POST['type']) {
                 }
             }
         } else {
-            // COMPLETE RE-ENCRYPTION
-
-            $personal_sk = $_SESSION['my_sk'];
+            // Re-ENCRYPT personal item password
+			
+			require_once $_SESSION['settings']['cpassman_dir'].'/install/upgrade.functions.php';
+			
+			// do a check on old PSK
+			if (!isset($_SESSION['my_sk']) || empty($_SESSION['my_sk'])) {
+				echo '[{"error" : "No personnal saltkey provided"}]';
+				break;
+			}
 
             // get data about pw
             $data = DB::queryfirstrow(
@@ -254,43 +286,56 @@ switch ($_POST['type']) {
                 WHERE id = %i",
                 $_POST['currentId']
             );
-            if (empty($data['pw_iv'])) {
-                // check if pw encrypted with protocol #2
-                $pw = decrypt($data['pw'], $_SESSION['my_sk']);
-                if (empty($pw)) {
-                    // used protocol is #1
-                    $pw = decryptOld($data['pw'], $_SESSION['my_sk']);  // decrypt using protocol #1
-                } else {
-                    // used protocol is #2
-                    // get key for this pw
-                    $dataItem = DB::queryfirstrow(
-                        "SELECT rand_key
-                        FROM ".prefix_table("keys")."
-                        WHERE `sql_table` = %s AND id = %i",
-                        "items",
-                        $data['id']
-                    );
-                    if (!empty($dataItem['rand_key'])) {
-                        // remove key from pw
-                        $pw = substr($pw, strlen($dataTemp['rand_key']));
-                    }
-                }
-
-                // encrypt it
-                $encrypt = cryption($pw, $personal_sk, "", "encrypt");
-
-                // store Password
-                DB::update(
-                    prefix_table('items'),
-                    array(
-                        'pw' => $encrypt['string'],
-                        'pw_iv' => $encrypt['iv']
-                       ),
-                    "id = %i", $data['id']
-                );
-            } else {
-                // already re-encrypted
-            }
+			if (strstr($data['pw_iv'], "def00000") === false) {
+				// get previous item pwd
+				$pw_old = cryption_phpCrypt($data['pw'], $_SESSION['my_sk'], $data['pw_iv'], "decrypt" );
+				
+				// encrypt with new protocol
+				$encrypt = cryption($pw_old['string'], "", "", "encrypt");
+				
+				// store encrypt
+				DB::update(
+					prefix_table('items'),
+					array(
+						'pw' => $encrypt['string'],
+						'pw_iv' => $encrypt['iv'],
+						'encryption_protocol' => ENCRYPTION_PROTOCOL
+					   ),
+					"id=%i", $data['id']
+				);
+				
+				// *** change log
+				$rows = DB::query(
+					"SELECT id_item, raison, raison_iv, date AS mDate, id_user, action
+					FROM ".prefix_table("log_items")."
+					WHERE id_item = %s AND raison LIKE 'at_pw :%'", 
+					$data['id']
+				);
+				while ($record = mysqli_fetch_array($resData)) {
+					// explode string
+					$reason = explode(' :', $record['raison']);
+					
+					// get previous item pwd
+					$pw_old = cryption_phpCrypt(trim($reason['1']), $_SESSION['my_sk'], $record['raison_iv'], "decrypt" );
+					
+					// encrypt with new protocol
+					$encrypt = cryption($pw_old['string'], "", "", "encrypt");
+					
+					// store change
+					DB::update(
+						prefix_table('items'),
+						array(
+							'raison' => "at_pw : ".$encrypt['string'],
+							'raison_iv' => $encrypt['iv']
+						   ),
+						"id_item=%i AND date=%s AND id_user=%i AND action =%s", 
+						$data['id'],
+						$record['mDate'],
+						$record['id_user'],
+						$record['action']
+					);
+				}
+			}
         }
 
 

@@ -18,6 +18,7 @@ if (!file_exists("../includes/settings.php")) {
 }
 require_once '../includes/settings.php';
 require_once '../sources/main.functions.php';
+require_once 'upgrade.functions.php';
 
 $_SESSION['settings']['loaded'] = "";
 
@@ -46,7 +47,7 @@ if (!$resData) {
 while ($record = mysqli_fetch_array($resData)) {
     $tmpData = substr(decrypt($record['pw']), strlen($record['pw_iv']));
     if (isUTF8($tmpData ) && !empty($tmpData )) {
-        $encrypt = cryption($tmpData , SALT, "", "encrypt");
+        $encrypt = cryption_phpCrypt($tmpData , SALT, "", "encrypt");
 
         // store Password
         mysqli_query($dbTmp,

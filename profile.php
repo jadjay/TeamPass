@@ -352,7 +352,7 @@ $(function() {
 
     //inline editing
     $(".editable_textarea").editable("sources/users.queries.php", {
-          indicator : "<img src=\'includes/images/loading.gif\' />",
+          indicator : "<img src=\'includes/images/ajax-loader.gif\' />",
           type   : "text",
           select : true,
           submit : "<i class=\'fa fa-check mi-green\'></i>&nbsp;",
@@ -360,7 +360,7 @@ $(function() {
           name : "newValue"
     });
     $(".editable_select").editable("sources/users.queries.php", {
-         indicator : "<img src=\'includes/images/loading.gif\' />",
+         indicator : "<img src=\'includes/images/ajax-loader.gif\' />",
          data   : " {'full':'<?php echo $LANG['full'];?>','sequential':'<?php echo $LANG['sequential'];?>', 'selected':'<?php echo $_SESSION['user_settings']['treeloadstrategy'];?>'}",
          type   : 'select',
          select : true,

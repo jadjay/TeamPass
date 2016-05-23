@@ -46,7 +46,7 @@ if( isset($_SERVER['HTTPS'] ) ) {
     <input type="hidden" id="hid_url_path" value="" />';
     // # LOADER
     echo '
-    <div style="position:absolute;top:49%;left:49%;display:none;z-index:9999999;" id="loader"><img src="../includes/images/76.gif" /></div>';
+    <div style="position:absolute;top:49%;left:49%;display:none;z-index:9999999;" id="loader"><img src="../includes/images/ajax-loader.gif" /></div>';
     // # HEADER ##
     echo '
     <div id="top">

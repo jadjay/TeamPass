@@ -76,7 +76,7 @@ echo '
 			<i class="fa fa-square fa-stack-2x"></i>
 			<i class="fa fa-cogs fa-stack-1x fa-inverse"></i>
 		</span>&nbsp;
-        <span id="renewal_icon_pdf" style="margin-left:15px;display:none;cursor:pointer;"><img src="includes/images/document-pdf-text.png" alt="" title="'.$LANG['generate_pdf'].'" onclick="generate_renewal_pdf()" /></span>
+        <span  id="renewal_icon_pdf" class="fa fa-file-pdf-o" title="'.$LANG['generate_pdf'].'" onclick="generate_renewal_pdf()" style="margin-left:15px;display:none;cursor:pointer;"></span>
         <div id="list_renewal_items" style="width:700px;margin:10px auto 0 auto;"></div>
         <input type="hidden" id="list_renewal_items_pdf" />
     </div>';

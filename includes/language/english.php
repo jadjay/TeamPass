@@ -14,6 +14,15 @@
  */
 global $LANG;
 $LANG = array (
+	'comments_system' => 'Enable Comments on Items',
+	'comments_system_tip' => 'Users can exchange on Item using Comments. The Comments can be written and seen by anyone having access to an Item. It consists in a unique text area field in which the user enters his comment. Only comment Author and a Manager can edit and trash a Comment.',
+	'has_added_a_comment' => 'has added a comment',
+	'no_comment_exists' => 'No comment exists for this Item.',
+	'participate_to_discussion' => 'Participate to discussion?',
+	'add_comment' => 'Add your comment',
+	'comments_on_this_item' => 'comments on this Item',
+	'comments_dialog_title' => 'Item Comments',
+    'can_manage_all_users' => 'Human Resources<br><i>Can manage all Users independately of his/hers group.<br>Will be also promoted to Manager role.<br>Will not be able to change an existing administrator (only an Administrator can remove administrator rights on a user).</i>',
     'user_ga_code' => 'Send GoogleAuthenticator to user by email',
     'send_ga_code' => 'Google Authenticator for user',
     'error_no_email' => 'This user has no email set!',

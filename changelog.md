@@ -1,4 +1,16 @@
 Last changes
+2.1.27
+ CHANGE: settings are stored on change
+ CHANGE: Encryption protocol changed to new library PHP-Encryption
+		 Releated notes:
+		 * Changed due to the fact that PHPCrypt has been identified as being unsafe 
+		 * No SALT is requested anymore for normal items
+		 * Personal SALT is still used
+		 * 
+ CHANGE: Removed unused image files
+ 
+ 
+
 2.1.26
  #1284 fix for can_manage_all_users update during upgrade
  #1279 SyntaxError: Unexpected token î in JSON at position 0

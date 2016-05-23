@@ -206,16 +206,6 @@ function loadFieldsList() {
    );
 }
 
-function changeSettingStatus(id, val) {
-    if (val == 1) {
-        $("#flag_"+id).html("<img src='includes/images/status.png' />");
-        $("#"+id+"_radio2").addClass("ui-button.redButton");
-        console.log(("#"+id+"_radio2"));
-    } else {
-        $("#flag_"+id).html("<img src='includes/images/status-busy.png' />");
-    }
-}
-
 //###########
 //## FUNCTION : Launch the action the admin wants
 //###########
@@ -250,19 +240,19 @@ function LaunchAdminActions(action,option)
                     $("#result_admin_action_check_pf").show();
                 } else if (data[0].result == "db_restore") {
                     $("#restore_bck_encryption_key_dialog").dialog("close");
-                    $("#result_admin_action_db_restore").html("<img src='includes/images/tick.png' alt='' />");
+                    $("#result_admin_action_db_restore").html("&nbsp;<span class='fa fa-check mi-green'></span>");
                     $("#result_admin_action_db_restore_get_file").hide();
                     //deconnect user
                     $("#menu_action").val("deconnexion");
                     document.main_form.submit();
                 } else if (data[0].result == "cache_reload") {
-                    $("#result_admin_action_reload_cache_table").html("<img src='includes/images/tick.png' alt='' />");
+                    $("#result_admin_action_reload_cache_table").html("&nbsp;<span class='fa fa-check mi-green'></span>");
                 } else if (data[0].result == "db_optimize") {
-                    $("#result_admin_action_db_optimize").html("<img src='includes/images/tick.png' alt='' />");
+                    $("#result_admin_action_db_optimize").html("&nbsp;<span class='fa fa-check mi-green'></span>");
                 } else if (data[0].result == "purge_old_files") {
-                    $("#result_admin_action_purge_old_files").html("<img src='includes/images/tick.png' alt='' />&nbsp;"+data[0].nb_files_deleted+"&nbsp;<? echo $LANG['admin_action_purge_old_files_result'];?>");
+                    $("#result_admin_action_purge_old_files").html("&nbsp;<span class='fa fa-check mi-green'></span>&nbsp;"+data[0].nb_files_deleted+"&nbsp;<? echo $LANG['admin_action_purge_old_files_result'];?>");
                 } else if (data[0].result == "db_clean_items") {
-                    $("#result_admin_action_db_clean_items").html("<img src='includes/images/tick.png' alt='' />&nbsp;"+data[0].nb_items_deleted+"&nbsp;<?php echo $LANG['admin_action_db_clean_items_result'];?>");
+                    $("#result_admin_action_db_clean_items").html("&nbsp;<span class='fa fa-check mi-green'></span>&nbsp;"+data[0].nb_items_deleted+"&nbsp;<?php echo $LANG['admin_action_db_clean_items_result'];?>");
                 } else if (data[0].result == "changed_salt_key") {
                     //deconnect user
                     $("#menu_action").val("deconnexion");
@@ -390,6 +380,43 @@ function changeMainSaltKey(start)
     }
 }
 
+/*
+* FUNCTION permitting to store into DB the settings changes
+*/
+function updateSetting(field)
+{
+	if (field == "") return false;
+	
+	// store in DB
+	var data = '{"field":"'+field+'", "value":"'+$("#"+field).val()+'"}';
+	console.log(data);
+	$.post(
+		"sources/admin.queries.php",
+		{
+			type    : "save_option_change",
+			data     : prepareExchangedData(data, "encode", "<?php echo $_SESSION['key'];?>"),
+			key     : "<?php echo $_SESSION['key'];?>"
+		},
+		function(data) {
+			//decrypt data
+			try {
+				data = prepareExchangedData(data , "decode", "<?php echo $_SESSION['key'];?>");
+			} catch (e) {
+				// error
+				$("#message_box").html("An error appears. Answer from Server cannot be parsed!<br />Returned data:<br />"+data).show().fadeOut(4000);
+
+				return;
+			}
+			console.log(data);
+			if (data.error == "") {
+				$("#"+field).after("<span class='fa fa-check fa-lg mi-green new_check'></span>");
+				$(".new_check").fadeOut(2000);
+				setTimeout('$(".new_check").remove()', 2100);
+			}
+		}
+	);
+}
+
 // Init
 $(function() {
     $('.toggle').toggles({
@@ -412,6 +439,34 @@ $(function() {
         } else {
             $("#"+e.target.id+"_input").val(0);
         }
+		// store in DB
+		var data = '{"field":"'+e.target.id+'", "value":"'+$("#"+e.target.id+"_input").val()+'"}';
+		console.log(data);
+		$.post(
+			"sources/admin.queries.php",
+			{
+				type    : "save_option_change",
+				data     : prepareExchangedData(data, "encode", "<?php echo $_SESSION['key'];?>"),
+				key     : "<?php echo $_SESSION['key'];?>"
+			},
+			function(data) {
+				//decrypt data
+				try {
+					data = prepareExchangedData(data , "decode", "<?php echo $_SESSION['key'];?>");
+				} catch (e) {
+					// error
+					$("#message_box").html("An error appears. Answer from Server cannot be parsed!<br />Returned data:<br />"+data).show().fadeOut(4000);
+
+					return;
+				}
+				console.log(data);
+				if (data.error == "") {
+					$("#"+e.target.id).after("<span class='fa fa-check fa-lg mi-green new_check' style='float:left;margin:-18px 0 0 56px;'></span>");
+					$(".new_check").fadeOut(2000);
+					setTimeout('$(".new_check").remove()', 2100);
+				}
+			}
+		);
     });
 
 

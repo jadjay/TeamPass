@@ -337,8 +337,9 @@ function identifyUser($sentData)
 
     // Check PSK
     if (
-            isset($_SESSION['settings']['psk_authentication']) && $_SESSION['settings']['psk_authentication'] == 1
-            && $data['admin'] != 1
+		isset($_SESSION['settings']['psk_authentication']) 
+		&& $_SESSION['settings']['psk_authentication'] == 1
+		&& $data['admin'] != 1
     ) {
         $psk = htmlspecialchars_decode($dataReceived['psk']);
         $pskConfirm = htmlspecialchars_decode($dataReceived['psk_confirm']);
@@ -372,7 +373,6 @@ function identifyUser($sentData)
             prefix_table('users'),
             array(
                 'login' => $username,
-                //'pw' => $password,
                 'pw' => $data['pw'],
                 'email' => "",
                 'admin' => '0',
@@ -388,7 +388,7 @@ function identifyUser($sentData)
         );
         $newUserId = DB::insertId();
         // Create personnal folder
-        if ($_SESSION['settings']['enable_pf_feature'] == "1") {
+        //if ($_SESSION['settings']['enable_pf_feature'] == "1") {
             DB::insert(
                 prefix_table("nested_tree"),
                 array(
@@ -399,7 +399,7 @@ function identifyUser($sentData)
                     'personal_folder' => '1'
                 )
             );
-        }
+        //}
         $proceedIdentification = true;
         $user_initial_creation_through_ldap = true;
     }
@@ -524,7 +524,7 @@ function identifyUser($sentData)
             $_SESSION['autoriser'] = true;
 
             // Generate a ramdom ID
-            $key = GenerateCryptKey(50);
+            $key = $pwdlib->getRandomToken(50);
 
             if ($debugDuo == 1) {
                 fputs(

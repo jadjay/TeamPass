@@ -870,12 +870,20 @@ switch ($_POST['type']) {
      * Generates a KEY with CRYPT
      */
     case "generate_new_key":
-        // load passwordLib library
-        $pwdlib = new SplClassLoader('PasswordLib', '../includes/libraries');
-        $pwdlib->register();
-        $pwdlib = new PasswordLib\PasswordLib();
-        // generate key
-        $key = $pwdlib->getRandomToken($_POST['size']);
-        echo '[{"key" : "'.$key.'"}]';
+		// load library
+		$pwgen = new SplClassLoader('Encryption\PwGen', '../includes/libraries');
+        $pwgen->register();		
+		$pwgen = new Encryption\PwGen\pwgen();
+		
+		// init
+		if (isset($_POST['size'])) $pwgen->setLength($_POST['size']);
+		if (isset($_POST['secure'])) $pwgen->setSecure($_POST['secure']);
+		if (isset($_POST['numerals'])) $pwgen->setNumerals($_POST['numerals']);
+		if (isset($_POST['capitalize'])) $pwgen->setCapitalize($_POST['capitalize']);
+		if (isset($_POST['ambiguous'])) $pwgen->setAmbiguous($_POST['ambiguous']);
+		if (isset($_POST['symbols'])) $pwgen->setSymbols($_POST['symbols']);
+		
+		// generate and send back	
+        echo '[{"key" : "'.$pwgen->generate().'"}]';
         break;
 }
