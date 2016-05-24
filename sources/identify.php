@@ -142,7 +142,6 @@ function identifyUser($sentData)
     $dataReceived = prepareExchangedData($sentData, "decode");
     // Prepare variables
     $passwordClear = htmlspecialchars_decode($dataReceived['pw']);
-    $passwordOldEncryption = encryptOld(htmlspecialchars_decode($dataReceived['pw']));
     $username = htmlspecialchars_decode($dataReceived['login']);
     $logError = "";
 
@@ -368,6 +367,10 @@ function identifyUser($sentData)
     ) {
         // If LDAP enabled, create user in CPM if doesn't exist
         $data['pw'] = $pwdlib->createPasswordHash($passwordClear);  // create passwordhash
+		
+		// generate protected key for personal passwords
+		$protected_key = \Defuse\Crypto\KeyProtectedByPassword::createRandomPasswordProtectedKey($passwordClear);
+		$data['protected_key_encoded'] = $protected_key->saveToAsciiSafeString();
 
         DB::insert(
             prefix_table('users'),
@@ -383,7 +386,8 @@ function identifyUser($sentData)
                 'groupes_interdits' => '0',
                 'groupes_visibles' => '0',
                 'last_pw_change' => time(),
-                'user_language' => $_SESSION['settings']['default_language']
+                'user_language' => $_SESSION['settings']['default_language'],
+				'protected_key_encoded' => $data['protected_key_encoded']
             )
         );
         $newUserId = DB::insertId();
@@ -405,6 +409,7 @@ function identifyUser($sentData)
     }
 
     // Check if user exists (and has been created in case of new LDAP user)
+	//db::debugMode(true);
     $data = DB::queryFirstRow(
         "SELECT * FROM ".prefix_table("users")." WHERE login=%s_login",
         array(
@@ -452,44 +457,32 @@ function identifyUser($sentData)
     }
 
     if ($proceedIdentification === true && $user_initial_creation_through_ldap == false) {
-        // User exists in the DB
-        //$data = $db->fetchArray($row);
-
-        //v2.1.17 -> change encryption for users password
-        if (
-                $passwordOldEncryption == $data['pw'] &&
-                !empty($data['pw'])
-        ) {
-            //update user's password
-            $data['pw'] = bCrypt($passwordClear, COST);
-            DB::update(
-                prefix_table('users'),
-                array(
-                    'pw' => $data['pw']
-                ),
-                "id=%i",
-                $data['id']
-            );
-        }
-        if (crypt($passwordClear, $data['pw']) == $data['pw'] && !empty($data['pw'])) {
-            //update user's password
-            $data['pw'] = $pwdlib->createPasswordHash($passwordClear);
-            DB::update(
-                prefix_table('users'),
-                array(
-                    'pw' => $data['pw']
-                ),
-                "id=%i",
-                $data['id']
-            );
-        }
-
-        // check the given password
+		// check the given password
         if ($pwdlib->verifyPasswordHash($passwordClear, $data['pw']) === true) {
             $userPasswordVerified = true;
         } else {
-            $userPasswordVerified = false;
-            logEvents('failed_auth', 'user_password_not_correct', "", stripslashes($username));
+			//v2.1.17 -> change encryption for users password
+			if (encryptOld($passwordClear) == $data['pw'] && !empty($data['pw'])) {
+				// encrypt
+				$data['pw'] = bCrypt($passwordClear, COST);
+			}
+			if (crypt($passwordClear, $data['pw']) == $data['pw'] && !empty($data['pw'])) {
+				//update user's password
+				$data['pw'] = $pwdlib->createPasswordHash($passwordClear);
+				DB::update(
+					prefix_table('users'),
+					array(
+						'pw' => $data['pw']
+					),
+					"id=%i",
+					$data['id']
+				);
+				$userPasswordVerified = true;
+			}
+			else {
+				$userPasswordVerified = false;
+				logEvents('failed_auth', 'user_password_not_correct', "", stripslashes($username));
+			}
         }
 
         if ($debugDuo == 1) {
@@ -560,6 +553,17 @@ function identifyUser($sentData)
             // get personal settings
             if (!isset($data['treeloadstrategy']) || empty($data['treeloadstrategy'])) $data['treeloadstrategy'] = "full";
             $_SESSION['user_settings']['treeloadstrategy'] = $data['treeloadstrategy'];
+			
+			// store in session protected key for personal items
+			if (isset($data['protected_key_encoded']) && $data['protected_key_encoded'] !== null) {
+				init_crypto();
+				
+				$_SESSION['user_key_encoded'] = crypto_functions(
+					$passwordClear, 
+					"get_user_key_encoded",
+					$data['protected_key_encoded']
+				);
+			}
 
             // manage session expiration
             $serverTime = time();

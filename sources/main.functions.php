@@ -242,6 +242,49 @@ function bCrypt($password, $cost)
 }
 
 /*
+*
+*/
+function init_crypto()
+{
+	// load library
+	if (!isset($_SESSION['settings']['cpassman_dir']) || empty($_SESSION['settings']['cpassman_dir'])) {
+		$_SESSION['settings']['cpassman_dir'] = "..";
+	}
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Crypto.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Core.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Encoding.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Key.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/RuntimeTests.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/KeyOrPassword.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/DerivedKeys.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/KeyProtectedByPassword.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/random/random.php';
+	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/ExceptionHandler.php';
+}
+
+/*
+*
+*/
+function crypto_functions($pwd, $action, $key)
+{
+	init_crypto();
+	
+	// creating a random key based upon pwd and retunr it in ascii format ot be stored in DB
+	if ($action == "create_key") {
+		$protected_key = \Defuse\Crypto\KeyProtectedByPassword::createRandomPasswordProtectedKey($pwd);
+		$ret = $protected_key->saveToAsciiSafeString();
+	}
+	// 
+	else if ($action == "get_user_key_encoded") {		
+		$protected_key = \Defuse\Crypto\KeyProtectedByPassword::loadFromAsciiSafeString($key);
+		$user_key = $protected_key->unlockKey($pwd);
+		$ret = $user_key->saveToAsciiSafeString();
+	}
+	
+	return $ret;
+}
+
+/*
 * 
 */
 function cryption($message, $salt, $key, $type)
@@ -257,19 +300,7 @@ function cryption($message, $salt, $key, $type)
         );
 	}
 	
-	// load library
-	if (!isset($_SESSION['settings']['cpassman_dir']) || empty($_SESSION['settings']['cpassman_dir'])) {
-		$_SESSION['settings']['cpassman_dir'] = "..";
-	}
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Crypto.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Core.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Encoding.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/Key.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/RuntimeTests.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/KeyOrPassword.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/DerivedKeys.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/random/random.php';
-	require_once $_SESSION['settings']['cpassman_dir']. '/includes/libraries/Encryption/Encryption/ExceptionHandler.php';
+	init_crypto();
 
     // manage key origin
     if (empty($key) && $type == "encrypt") {
@@ -1260,4 +1291,17 @@ function get_client_ip_server() {
 function noHTML($input, $encoding = 'UTF-8')
 {
     return htmlentities($input, ENT_QUOTES | ENT_HTML5, $encoding);
+}
+
+/*
+*
+*/
+function change_all_user_personal_passwords ($user_id, $new_pw)
+{
+	
+	
+	
+		
+	// generate new protected key
+	crypto_functions($pw, "create_key");
 }

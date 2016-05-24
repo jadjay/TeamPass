@@ -81,7 +81,24 @@ if(!isset($_SESSION['upgrade']['add_field__encryption_protocol__in_items']) || $
 	} else {
 		$_SESSION['upgrade']['add_field__encryption_protocol__in_items'] = 1;
 	}
+}`` text NOT NULL,
+
+// add field protected_key_encoded to USERS table
+if(!isset($_SESSION['upgrade']['add_field__protected_key_encoded__in_users']) || $_SESSION['upgrade']['add_field__protected_key_encoded__in_users'] != 1) {
+	$res = addColumnIfNotExist(
+		$_SESSION['tbl_prefix']."users",
+		"protected_key_encoded",
+		"text NULL DEFAULT NULL"
+	);
+	if ($res === false) {
+		echo '[{"finish":"1", "msg":"", "error":"An error appears when adding field protected_key_encoded to table Users! '.mysqli_error($dbTmp).'!"}]';
+		mysqli_close($dbTmp);
+		exit();
+	} else {
+		$_SESSION['upgrade']['add_field__protected_key_encoded__in_users'] = 1;
+	}
 }
+
 
 // add new table COmments
 if(!isset($_SESSION['upgrade']['table_comments']) || $_SESSION['upgrade']['table_comments'] != 1) {

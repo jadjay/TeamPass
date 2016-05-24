@@ -631,7 +631,7 @@ if (
                     <br />
                     <label for="forgot_pw_login">'.$LANG['login'].'</label>
                     <input type="text" size="20" name="forgot_pw_login" id="forgot_pw_login" />
-                    <div id="div_forgot_pw_status" style="text-align:center;margin-top:15px;display:none;" class="ui-corner-all"><img src="includes/images/76.gif" /></div>
+                    <div id="div_forgot_pw_status" style="text-align:center;margin-top:15px;display:none;" class="ui-corner-all"><span class="fa fa-cog fa-spin"></span></div>
                 </div>';
     }
 echo '
@@ -666,7 +666,7 @@ echo '
 echo '
     <div id="div_fin_session" style="display:none;">
         <div style="padding:10px;text-align:center;">
-            <img src="includes/images/alarm-clock.png" alt="" />&nbsp;<b>'.$LANG['index_session_ending'].'</b>
+            <span class="fa fa-clock mi-red"></span>&nbsp;<b>'.$LANG['index_session_ending'].'</b>
         </div>
     </div>';
 // WARNING FOR QUERY ERROR

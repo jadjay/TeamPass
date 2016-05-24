@@ -137,16 +137,22 @@ if (!empty($_POST['type'])) {
             $dataReceived = prepareExchangedData($_POST['data'], "decode");
 
             // Prepare variables
-            $login = noHTML(htmlspecialchars_decode($dataReceived['login']));
-            $name = noHTML(htmlspecialchars_decode($dataReceived['name']));
-            $lastname = noHTML(htmlspecialchars_decode($dataReceived['lastname']));
-            $pw = htmlspecialchars_decode($dataReceived['pw']);
+            $login = mysqli_escape_string($link, htmlspecialchars_decode($dataReceived['login']));
+            $name = mysqli_escape_string($link, htmlspecialchars_decode($dataReceived['name']));
+            $lastname = mysqli_escape_string($link, htmlspecialchars_decode($dataReceived['lastname']));
+            $pw = mysqli_escape_string($link, htmlspecialchars_decode($dataReceived['pw']));
 
             // Empty user
             if (mysqli_escape_string($link, htmlspecialchars_decode($login)) == "") {
                 echo '[ { "error" : "'.addslashes($LANG['error_empty_data']).'" } ]';
                 break;
             }
+
+			// load passwordLib library
+			$pwdlib = new SplClassLoader('PasswordLib', '../includes/libraries');
+			$pwdlib->register();
+			$pwdlib = new PasswordLib\PasswordLib();
+			
             // Check if user already exists
             $data = DB::query(
                 "SELECT id, fonction_id, groupes_interdits, groupes_visibles FROM ".prefix_table("users")."
@@ -162,7 +168,7 @@ if (!empty($_POST['type'])) {
                         'login' => $login,
                         'name' => $name,
                         'lastname' => $lastname,
-                        'pw' => bCrypt(stringUtf8Decode($pw), COST),
+						'pw' => $pwdlib->createPasswordHash($pw),
                         'email' => $dataReceived['email'],
                         'admin' => $dataReceived['admin'] == "true" ? '1' : '0',
                         'gestionnaire' => $dataReceived['manager'] == "true" ? '1' : '0',
@@ -172,8 +178,9 @@ if (!empty($_POST['type'])) {
                         'fonction_id' => $dataReceived['manager'] == "true" ? $_SESSION['fonction_id'] : '0', // If manager is creater, then assign them roles as creator
                         'groupes_interdits' => ($dataReceived['manager'] == "true" && isset($data['groupes_interdits']) && !is_null($data['groupes_interdits'])) ? $data['groupes_interdits'] : '0',
                         'groupes_visibles' => ($dataReceived['manager'] == "true" && isset($data['groupes_visibles']) && !is_null($data['groupes_visibles'])) ? $data['groupes_visibles'] : '0',
-                        'isAdministratedByRole' => $dataReceived['isAdministratedByRole']
-                       )
+                        'isAdministratedByRole' => $dataReceived['isAdministratedByRole'],
+						'protected_key_encoded' => crypto_functions($pw, "create_key")
+                    )
                 );
                 $new_user_id = DB::insertId();
                 // Create personnal folder

@@ -82,7 +82,7 @@ switch ($_POST['type']) {
         $pwdlib = new PasswordLib\PasswordLib();
 
         // Prepare variables
-        $newPw = $pwdlib->createPasswordHash(htmlspecialchars_decode($dataReceived['new_pw']));    //bCrypt(htmlspecialchars_decode($dataReceived['new_pw']), COST);
+        $newPw = $pwdlib->createPasswordHash(htmlspecialchars_decode($dataReceived['new_pw']));  
 
         // User has decided to change is PW
         if (isset($_POST['change_pw_origine']) && $_POST['change_pw_origine'] == "user_change" && $_SESSION['user_admin'] != 1) {
@@ -154,6 +154,7 @@ switch ($_POST['type']) {
                     "id = %i",
                     $_SESSION['user_id']
                 );
+				
                 // update LOG
                 logEvents('user_mngt', 'at_user_pwd_changed', $_SESSION['user_id'], $_SESSION['login'], $_SESSION['user_id']);
                 echo '[ { "error" : "none" } ]';
@@ -172,11 +173,7 @@ switch ($_POST['type']) {
                 echo '[ { "error" : "not_admin_or_manager" } ]';
                 break;
             }
-            // Check KEY
-            /*if ($_POST['key'] != $_SESSION['key']) {
-                echo '[ { "error" : "key_not_conform '.$_POST['key'].'" } ]';
-                break;
-            }*/
+			
             // update DB
             DB::update(
                 prefix_table("users"),

@@ -290,6 +290,12 @@ switch ($_POST['type']) {
 				// get previous item pwd
 				$pw_old = cryption_phpCrypt($data['pw'], $_SESSION['my_sk'], $data['pw_iv'], "decrypt" );
 				
+				// ensure phpCrypt was used to encode, otherwize we have an issue.
+				if (!is_utf8($pw_old) || empty($pw_old)) {
+					echo '[{"error" : "Password decryption failed! Please report to Administrator."}]';
+					break;
+				}
+				
 				// encrypt with new protocol
 				$encrypt = cryption($pw_old['string'], "", "", "encrypt");
 				
